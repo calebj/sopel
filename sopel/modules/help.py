@@ -60,6 +60,40 @@ def help(bot, trigger):
             for line in msg:
                 bot.say(line, trigger.nick)
 
+@example('.module help')
+@commands('module')
+@priority('low')
+def modhelp(bot, trigger):
+    """Shows a module's list of commands"""
+    if trigger.group(2):
+        name = trigger.group(2)
+        name = name.lower()
+
+        # number of lines of help to show
+        threshold = 3
+
+        if name in bot._command_groups:
+            if len(bot._command_groups[name]) > threshold: # 3 commands doesn't always mean 3 lines, but meh
+                if trigger.nick != trigger.sender:  # don't say that if asked in private
+                    bot.reply('The documentation for this module is too long; I\'m sending it to you in a private message.')
+                msgfun = lambda l: bot.msg(trigger.nick, l)
+            else:
+                msgfun = bot.say
+
+            cmds = bot._command_groups[name]
+            for cmd in cmds:
+                cmd_names = name.upper() + ' : ' + '|'.join(cmd)
+                cmd = cmd[0] # Docs from first/only alias
+                if cmd in bot.doc:
+                    msgfun(bold(cmd_names))
+                    for line in bot.doc[cmd][0]:
+                        msgfun(line)
+                    if bot.doc[cmd][1]:
+                        msgfun('e.g. ' + bot.doc[cmd][1])
+                else:
+                    msgfun(bold(cmd_names) + ' : no documentation available for this command.')
+        else:
+            bot.reply("I don\'t know that module.")
 
 @rule('$nick' r'(?i)help(?:[?!]+)?$')
 @priority('low')
